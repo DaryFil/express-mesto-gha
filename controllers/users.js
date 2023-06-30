@@ -1,5 +1,5 @@
 const {
-  SUCCESS_CODE_200, ERROR_CODE_400, ERROR_CODE_404, ERROR_CODE_500,
+  SUCCESS_CODE_200, SUCCESS_CODE_201, ERROR_CODE_400, ERROR_CODE_404, ERROR_CODE_500,
 } = require('../utils/constants');
 const User = require('../models/user');
 
@@ -8,7 +8,7 @@ module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.status(SUCCESS_CODE_201).send({ data: user }))
     .catch((error) => {
       if (error.name === 'ValidationError') {
         res.status(ERROR_CODE_400).send({ message: 'Переданы некорректные данные при создании пользователя.' });

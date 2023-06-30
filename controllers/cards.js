@@ -1,5 +1,5 @@
 const {
-  SUCCESS_CODE_200, ERROR_CODE_400, ERROR_CODE_404, ERROR_CODE_500,
+  SUCCESS_CODE_200, SUCCESS_CODE_201, ERROR_CODE_400, ERROR_CODE_404, ERROR_CODE_500,
 } = require('../utils/constants');
 
 const Card = require('../models/card');
@@ -10,7 +10,7 @@ module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.status(SUCCESS_CODE_201).send({ data: card }))
     .catch((error) => {
       console.log(error);
       if (error.name === 'CastError' || error.name === 'ValidationError') {
