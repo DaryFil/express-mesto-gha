@@ -14,9 +14,6 @@ const validationId = (value) => {
   } else { return value; }
 };
 
-// Создать нового пользователя:
-// router.post('/', createUser);
-
 // Получить данные пользователей:
 router.get('/', getUsers);
 // Получить данные пользователя по Id:
