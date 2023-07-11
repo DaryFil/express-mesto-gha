@@ -10,7 +10,7 @@ const { auth } = require('./middlewares/auth');
 const {
   createUser, login,
 } = require('./controllers/users');
-const NotFoundError = require('./errors/not-found-err');
+// const NotFoundError = require('./errors/not-found-err');
 const error = require('./middlewares/error');
 // Создание экземпляра приложения Express
 const app = express();
@@ -32,23 +32,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(auth);
-app.use(errors());
-app.use(error);
-app.use(require('./middlewares/error'));
+
 app.use('/users', auth, require('./routes/users'));
 
 app.use('/cards', auth, require('./routes/cards'));
+app.use('/', auth, require('./routes/index'));
 
-app.use((req, res, next) => {
-  next(() => (new NotFoundError()).send({ message: 'Неверный путь' }));
-});
+app.use(errors());
+app.use(error);
+app.use(require('./middlewares/error'));
 
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-  }),
-}), login);
 // Создать нового пользователя
 app.post('/signup', celebrate({
   body: Joi.object().keys({
@@ -59,6 +52,13 @@ app.post('/signup', celebrate({
     password: Joi.string().required(),
   }),
 }), createUser);
+
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), login);
 
 // Запуск сервера на указанном порту
 app.listen(PORT);
