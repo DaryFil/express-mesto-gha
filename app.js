@@ -6,7 +6,7 @@ const { celebrate, Joi } = require('celebrate');
 const { errors } = require('celebrate');
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
-const { auth } = require('./middlewares/auth');
+const auth = require('./middlewares/auth');
 const {
   createUser, login,
 } = require('./controllers/users');
