@@ -5,13 +5,15 @@ const mongoose = require('mongoose');
 const { celebrate, Joi } = require('celebrate');
 const { errors } = require('celebrate');
 const helmet = require('helmet');
-const bodyParser = require('body-parser');
+// const bodyParser = require('body-parser');
 const auth = require('./middlewares/auth');
 const {
   createUser, login,
 } = require('./controllers/users');
+
 // const NotFoundError = require('./errors/not-found-err');
-const error = require('./middlewares/error');
+// const error = require('./middlewares/error');
+
 // Создание экземпляра приложения Express
 const app = express();
 // Применение промежуточного ПО для обеспечения безопасности
@@ -27,20 +29,17 @@ mongoose
     useNewUrlParser: true,
   });
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(cookieParser());
 
-app.use(auth);
-
-app.use('/users', auth, require('./routes/users'));
-
-app.use('/cards', auth, require('./routes/cards'));
-app.use('/', auth, require('./routes/index'));
-
-app.use(errors());
-app.use(error);
-app.use(require('./middlewares/error'));
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), login);
 
 // Создать нового пользователя
 app.post('/signup', celebrate({
@@ -53,12 +52,10 @@ app.post('/signup', celebrate({
   }),
 }), createUser);
 
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-  }),
-}), login);
+app.use('/', auth, require('./routes/index'));
 
+app.use(errors());
+
+app.use(require('./middlewares/error'));
 // Запуск сервера на указанном порту
 app.listen(PORT);
