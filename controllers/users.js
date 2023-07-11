@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken'); // импортируем модуль jsonwebtoken
-const bcrypt = require('bcryptjs'); // импортируем bcrypt
+const bcrypt = require('bcrypt'); // импортируем bcrypt
 
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-err');
@@ -25,12 +25,12 @@ module.exports.createUser = (req, res, next) => {
         name, about, avatar, email,
       },
     }))
-    .catch((error) => {
-      if (error instanceof mongoose.Error.ValidationError) {
+    .catch((err) => {
+      if (err instanceof mongoose.Error.ValidationError) {
         next(new BadRequest('Переданы некорректные данные при создании пользователя'));
-      } else if (error.code === 11000) {
+      } else if (err.code === 11000) {
         next(new ConflictError('Данный email уже зарегистрирован'));
-      } else { next(error); }
+      } else { next(err); }
     });
 };
 
