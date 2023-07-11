@@ -7,15 +7,15 @@ const UnauthorizedError = require('../errors/unauthorized-err').default;
 const userSchema = new mongoose.Schema(
   {
     name: {
-      minlength: [2, 'Минимальная длина поля "name" - 2'],
-      maxlength: [30, 'Максимальная длина поля "name" - 30'],
       type: String,
+      minlength: 2,
+      maxlength: 30,
       default: 'Жак-Ив Кусто',
     },
     about: {
-      minlength: [2, 'Минимальная длина поля "about" - 2'],
-      maxlength: [30, 'Максимальная длина поля "about" - 30'],
       type: String,
+      minlength: 2,
+      maxlength: 30,
       default: 'Исследователь',
     },
     avatar: {
@@ -31,42 +31,38 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, 'Поле "email" должно быть заполнено'],
+      required: true,
       unique: true,
       validate: {
         validator: (email) => validator.isEmail(email),
-        message: 'Неправильный формат почты',
+        message: 'Некорректный email',
       },
     },
     password: {
       type: String,
-      required: [true, 'Поле "password" должно быть заполнено'],
+      required: true,
       select: false,
     },
   },
   { versionKey: false },
 );
 
-// eslint-disable-next-line func-names
 userSchema.statics.findUserByCredentials = function (email, password) {
   return this.findOne({ email })
     .select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(
-          new UnauthorizedError('Неправильные почта или пароль'),
-        );
+        return Promise.reject(new UnauthorizedError('Неправильные почта или пароль'));
       }
 
-      return bcrypt.compare(password, user.password).then((matched) => {
-        if (!matched) {
-          return Promise.reject(
-            new UnauthorizedError('Неправильные почта или пароль'),
-          );
-        }
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return Promise.reject(new UnauthorizedError('Неправильные почта или пароль'));
+          }
 
-        return user;
-      });
+          return user;
+        });
     });
 };
 
