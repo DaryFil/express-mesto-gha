@@ -5,14 +5,10 @@ const mongoose = require('mongoose');
 const { celebrate, Joi } = require('celebrate');
 const { errors } = require('celebrate');
 const helmet = require('helmet');
-// const bodyParser = require('body-parser');
 const auth = require('./middlewares/auth');
 const {
   createUser, login,
 } = require('./controllers/users');
-
-// const NotFoundError = require('./errors/not-found-err');
-// const error = require('./middlewares/error');
 
 // Создание экземпляра приложения Express
 const app = express();
@@ -29,8 +25,6 @@ mongoose
     useNewUrlParser: true,
   });
 
-// app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 

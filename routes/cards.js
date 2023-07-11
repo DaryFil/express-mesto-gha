@@ -19,14 +19,17 @@ router.post('/', celebrate({
     link: Joi.string().required().pattern(/^((http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-/])*)?/),
   }),
 }), createCard);
+
 // Получить карточки из бд:
 router.get('/', getCards);
+
 // Удалить карточку по id:
 router.delete('/:cardId', celebrate({
   params: Joi.object().keys({
     cardId: Joi.string().custom(validationId),
   }),
 }), deleteCard);
+
 // Поставить лайк карточке:
 router.put('/:cardId/likes', celebrate({
   params: Joi.object().keys({
