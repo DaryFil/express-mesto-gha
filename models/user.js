@@ -1,25 +1,23 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const validator = require('validator');
+
 const UnauthorizedError = require('../errors/unauthorized-err');
 
 const userSchema = new mongoose.Schema({
   name: {
-    required: [true, 'Поле "name" должно быть заполнено'],
     minlength: [2, 'Минимальная длина поля "name" - 2'],
     maxlength: [30, 'Максимальная длина поля "name" - 30'],
     type: String,
     default: 'Жак-Ив Кусто',
   },
   about: {
-    required: [true, 'Поле "about" должно быть заполнено'],
     minlength: [2, 'Минимальная длина поля "about" - 2'],
     maxlength: [30, 'Максимальная длина поля "about" - 30'],
     type: String,
     default: 'Исследователь',
   },
   avatar: {
-    required: [true, 'Поле "avatar" должно быть заполнено'],
     type: String,
     validate: {
       validator: (url) => /^((http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-/])*)?/.test(url),
