@@ -103,23 +103,7 @@ module.exports.login = (req, res, next) => {
       next();
     });
 };
-//       // отправим токен, браузер сохранит его в куках
-//       res
-//         .cookie('jwt', token, {
-//           httpOnly: true,
-//           sameSite: true,
-//           maxAge: 3600000 * 24 * 7,
-//         })
-//         // .end(); // если у ответа нет тела, можно использовать метод end
-//         .send({ token });
-//     // .send({ _id: user._id  });
-//     })
-//     .catch((err) => {
-//       res
-//         .status(401)
-//         .send({ message: err.message });
-//     });
-// };
+
 module.exports.getUserInfo = (req, res, next) => {
   const { _id } = req.user;
   User.findById(_id)
