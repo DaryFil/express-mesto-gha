@@ -11,6 +11,7 @@ const {
   createUser, login,
 } = require('./controllers/users');
 const NotFoundError = require('./errors/not-found-err');
+const error = require('./middlewares/error');
 // Создание экземпляра приложения Express
 const app = express();
 // Применение промежуточного ПО для обеспечения безопасности
@@ -32,6 +33,7 @@ app.use(cookieParser());
 
 app.use(auth);
 app.use(errors());
+app.use(error);
 app.use(require('./middlewares/error'));
 app.use('/users', auth, require('./routes/users'));
 
