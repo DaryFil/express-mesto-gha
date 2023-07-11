@@ -16,12 +16,7 @@ const validationId = (value) => {
 
 // Получить данные пользователей:
 router.get('/', getUsers);
-// Получить данные пользователя по Id:
-router.get('/:userId', celebrate({
-  params: Joi.object().keys({
-    userId: Joi.string().custom(validationId),
-  }),
-}), searchUserById);
+
 // Получить информацию о текущем пользователе
 router.get('/me', getUserInfo);
 // Обновить профиль:
@@ -37,5 +32,11 @@ router.patch('/me/avatar', celebrate({
     avatar: Joi.string().pattern(/^((http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-/])*)?/),
   }),
 }), updateAvatar);
+// Получить данные пользователя по Id:
+router.get('/:userId', celebrate({
+  params: Joi.object().keys({
+    userId: Joi.string().custom(validationId),
+  }),
+}), searchUserById);
 
 module.exports = router;
