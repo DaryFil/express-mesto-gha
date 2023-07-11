@@ -1,106 +1,127 @@
-const {
-  SUCCESS_CODE_200, SUCCESS_CODE_201, ERROR_CODE_400, ERROR_CODE_404, ERROR_CODE_500,
-} = require('../utils/constants');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken'); // импортируем модуль jsonwebtoken
+const bcrypt = require('bcryptjs'); // импортируем bcrypt
+
 const User = require('../models/user');
+const NotFoundError = require('../errors/not-found-err');
+const BadRequest = require('../errors/bad-request');
+const ConflictError = require('../errors/conflict-err');
 
 // Создать нового пользователя
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-
-  User.create({ name, about, avatar })
-    .then((user) => res.status(SUCCESS_CODE_201).send({ data: user }))
+module.exports.createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
+    .then(() => res.send({
+      data: {
+        name, about, avatar, email,
+      },
+    }))
     .catch((error) => {
-      if (error.name === 'ValidationError') {
-        res.status(ERROR_CODE_400).send({ message: 'Переданы некорректные данные при создании пользователя.' });
-      } else {
-        res.status(ERROR_CODE_500).send({ message: 'На сервере произошла ошибка' });
-      }
+      if (error instanceof mongoose.Error.ValidationError) {
+        next(new BadRequest('Переданы некорректные данные при создании пользователя'));
+      } else if (error.code === 11000) {
+        next(new ConflictError('Данный email уже зарегистрирован'));
+      } else { next(error); }
     });
 };
 
 // Получение пользователей из бд
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => res.status(ERROR_CODE_500).send({ message: 'На сервере произошла ошибка' }));
+    .catch((error) => next(error));
 };
 
 // Поиск пользователя по id
-module.exports.searchUserById = (req, res) => {
+module.exports.searchUserById = (req, res, next) => {
   const { userId } = req.params;
   User.findById(userId)
     .then((user) => {
       if (user) {
         res.send({ data: user });
-      } else { res.status(ERROR_CODE_404).send({ message: 'Пользователь по указанному _id не найден.' }); }
+      } else { throw new NotFoundError('Пользователь с указанным _id не найден.'); }
     })
     .catch((error) => {
-      if (error.name === 'CastError') {
-        res.status(ERROR_CODE_400).send({ message: 'Передан неккоректный _id пользователя' });
+      if (error instanceof mongoose.CastError) {
+        next(new BadRequest('Передан некорректный _id пользовтателя'));
       } else {
-        res.status(ERROR_CODE_500).send({ message: 'На сервере произошла ошибка' });
+        next(error);
       }
     });
 };
-
-// Обновить данные профиля
-module.exports.updateUser = (req, res) => {
-  const { name, about } = req.body;
-  User.findByIdAndUpdate(
-    req.user._id,
-    { name, about },
-    { new: true, runValidators: true },
-  )
-    .orFail()
-    .then((user) => res.status(SUCCESS_CODE_200).send(user))
-    .catch((error) => {
-      if (error.name === 'CastError' || error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_400).send({
-          message:
-            'Переданы некорректные данные при обновлении профиля',
-        });
+function updateUserInfo(req, res, next, data) {
+  User.findByIdAndUpdate(req.user._id, data, { runValidators: true, context: 'query', new: true })
+    .then((user) => {
+      if (user) {
+        res.send({ data: user });
+      } else { throw new NotFoundError('Пользователь с указанным _id не найден.'); }
+    })
+    .catch((err) => {
+      if (err instanceof mongoose.Error.ValidationError) {
+        next(new BadRequest('Переданы некорректные данные при обновлении пользовтателя'));
+      } else {
+        next(err);
       }
-
-      if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_404).send({
-          message: 'Пользователь с указанным id не найден',
-        });
-      }
-
-      return res
-        .status(ERROR_CODE_500)
-        .send({
-          message:
-            'На сервере произошла ошибка',
-        });
     });
+}
+// Обновить данные профиля
+module.exports.updateUser = (req, res, next) => {
+  const { name, about } = req.body;
+  updateUserInfo(req, res, next, { name, about });
 };
 
 // Обновить аватар пользователя
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
-  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
-    .orFail()
-    .then((user) => res.status(SUCCESS_CODE_200).send(user))
-    .catch((error) => {
-      if (error.name === 'CastError' || error.name === 'ValidationError') {
-        return res.status(ERROR_CODE_400).send({
-          message:
-            'Переданы некорректные данные при обновлении аватара',
-        });
-      }
+  updateUserInfo(req, res, next, { avatar });
+};
 
-      if (error.name === 'DocumentNotFoundError') {
-        return res.status(ERROR_CODE_404).send({
-          message: 'Пользователь с указанным id не найден',
-        });
-      }
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
 
-      return res
-        .status(ERROR_CODE_500)
-        .send({
-          message:
-            'На сервере произошла ошибка',
-        });
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      // создадим токен
+      const token = jwt.sign({ _id: user._id }, 'some-very-incredible-very-important-and-unbelievable-secret-key', { expiresIn: '7d' });
+      // отправим токен, браузер сохранит его в куках
+      res
+        .cookie('jwt', token, {
+          httpOnly: true,
+          sameSite: true,
+          maxAge: 3600000 * 24 * 7,
+        })
+        // .end(); // если у ответа нет тела, можно использовать метод end
+        .send({ token });
+    // .send({ _id: user._id  });
+    })
+    .catch((err) => {
+      res
+        .status(401)
+        .send({ message: err.message });
+    });
+};
+module.exports.getUserInfo = (req, res, next) => {
+  const { _id } = req.user;
+  User.findById(_id)
+    .then((user) => {
+      if (user) {
+        res.send({ data: user });
+      } else { throw new NotFoundError('Пользователь с указанным _id не найден.'); }
+    })
+    .catch((err) => {
+      if (err instanceof mongoose.CastError) {
+        next(new BadRequest('Передан некорректный _id пользователя'));
+      } else {
+        next(err);
+      }
     });
 };
