@@ -12,6 +12,7 @@ module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
+
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name,
@@ -25,12 +26,12 @@ module.exports.createUser = (req, res, next) => {
         name, about, avatar, email,
       },
     }))
-    .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
+    .catch((error) => {
+      if (error instanceof mongoose.Error.ValidationError) {
         next(new BadRequest('Переданы некорректные данные при создании пользователя'));
-      } else if (err.code === 11000) {
+      } else if (error.code === 11000) {
         next(new ConflictError('Данный email уже зарегистрирован'));
-      } else { next(err); }
+      } else { next(error); }
     });
 };
 
@@ -48,7 +49,9 @@ module.exports.searchUserById = (req, res, next) => {
     .then((user) => {
       if (user) {
         res.send({ data: user });
-      } else { throw new NotFoundError('Пользователь с указанным _id не найден.'); }
+      } else {
+        throw new NotFoundError('Пользователь с указанным _id не найден.');
+      }
     })
     .catch((error) => {
       if (error instanceof mongoose.CastError) {
@@ -63,7 +66,9 @@ function updateUserInfo(req, res, next, data) {
     .then((user) => {
       if (user) {
         res.send({ data: user });
-      } else { throw new NotFoundError('Пользователь с указанным _id не найден.'); }
+      } else {
+        throw new NotFoundError('Пользователь с указанным _id не найден.');
+      }
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
@@ -85,30 +90,36 @@ module.exports.updateAvatar = (req, res, next) => {
   updateUserInfo(req, res, next, { avatar });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      // создадим токен
-      const token = jwt.sign({ _id: user._id }, 'some-very-incredible-very-important-and-unbelievable-secret-key', { expiresIn: '7d' });
-      // отправим токен, браузер сохранит его в куках
-      res
-        .cookie('jwt', token, {
-          httpOnly: true,
-          sameSite: true,
-          maxAge: 3600000 * 24 * 7,
-        })
-        // .end(); // если у ответа нет тела, можно использовать метод end
-        .send({ token });
-    // .send({ _id: user._id  });
+      res.send({
+        token: jwt.sign({ _id: user._id }, 'some-very-incredible-very-important-and-unbelievable-secret-key', { expiresIn: '7d' }),
+      });
     })
-    .catch((err) => {
-      res
-        .status(401)
-        .send({ message: err.message });
+    .catch(() => {
+      next();
     });
 };
+//       // отправим токен, браузер сохранит его в куках
+//       res
+//         .cookie('jwt', token, {
+//           httpOnly: true,
+//           sameSite: true,
+//           maxAge: 3600000 * 24 * 7,
+//         })
+//         // .end(); // если у ответа нет тела, можно использовать метод end
+//         .send({ token });
+//     // .send({ _id: user._id  });
+//     })
+//     .catch((err) => {
+//       res
+//         .status(401)
+//         .send({ message: err.message });
+//     });
+// };
 module.exports.getUserInfo = (req, res, next) => {
   const { _id } = req.user;
   User.findById(_id)

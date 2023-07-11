@@ -7,14 +7,12 @@ const Card = require('../models/card');
 
 // Создание новой карточки
 module.exports.createCard = (req, res, next) => {
-  console.log(req.user._id);
   const { name, link } = req.body;
   const owner = req.user;
 
   Card.create({ name, link, owner })
     .then((card) => res.send({ data: card }))
     .catch((error) => {
-      console.log(error);
       if (error instanceof mongoose.Error.ValidationError) {
         next(new BadRequest('Переданы некорректные данные при создании карточки'));
       } else {
@@ -75,7 +73,7 @@ module.exports.likeCard = (req, res, next) => {
     })
     .catch((error) => {
       if (error instanceof mongoose.CastError) {
-        next(new BadRequest('Переданы некорректные данные при создании карточки'));
+        next(new BadRequest('Передан некорректный _id карточки'));
       } else {
         next(error);
       }
