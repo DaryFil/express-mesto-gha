@@ -10,17 +10,13 @@ const { auth } = require('./middlewares/auth');
 const {
   createUser, login,
 } = require('./controllers/users');
-
+const NotFoundError = require('./errors/not-found-err');
 // Создание экземпляра приложения Express
 const app = express();
 // Применение промежуточного ПО для обеспечения безопасности
 app.use(helmet());
 // Отключение заголовка "x-powered-by"
 app.disable('x-powered-by');
-
-const {
-  ERROR_CODE_404,
-} = require('./utils/constants');
 
 // Определение порта из переменной окружения
 const { PORT = 3000 } = process.env;
@@ -34,13 +30,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// app.use((req, res, next) => {
-//   req.user = {
-//     _id: '649db1a8dd10601c7b7ce2b6',
-//   };
-//   next();
-// });
-// // авторизация
 app.use(auth);
 app.use(errors());
 app.use(require('./middlewares/error'));
@@ -48,8 +37,8 @@ app.use('/users', auth, require('./routes/users'));
 
 app.use('/cards', auth, require('./routes/cards'));
 
-app.use((req, res) => {
-  res.status(ERROR_CODE_404).send({ message: 'Неверный путь' });
+app.use((req, res, next) => {
+  next(() => (new NotFoundError).send({ message: 'Неверный путь' });
 });
 
 app.post('/signin', celebrate({
