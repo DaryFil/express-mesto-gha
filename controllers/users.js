@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken'); // импортируем модуль jsonwebtoken
-const bcrypt = require('bcrypt'); // импортируем bcrypt
+const bcrypt = require('bcryptjs'); // импортируем bcrypt
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-err');
 const BadRequest = require('../errors/bad-request');
