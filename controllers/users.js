@@ -111,11 +111,5 @@ module.exports.getUserInfo = (req, res, next) => {
         res.send({ data: user });
       } else { throw new NotFoundError('Пользователь с указанным _id не найден.'); }
     })
-    .catch((err) => {
-      if (err instanceof mongoose.CastError) {
-        next(new BadRequest('Передан некорректный _id пользователя'));
-      } else {
-        next(err);
-      }
-    });
+    .catch(next);
 };

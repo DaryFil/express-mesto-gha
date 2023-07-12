@@ -1,11 +1,11 @@
 const router = require('express').Router();
-const http2 = require('node:http2');
+const NotFoundError = require('../errors/not-found-err');
 
 router.use('/users', require('./users'));
 router.use('/cards', require('./cards'));
 
-router.use((req, res) => {
-  res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Неверный путь' });
+router.use((req, res, next) => {
+  next(new NotFoundError('Неверный путь'));
 });
 
 module.exports = router;
