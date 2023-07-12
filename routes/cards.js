@@ -1,48 +1,23 @@
 const router = require('express').Router();
-const mongoose = require('mongoose');
-const { celebrate, Joi } = require('celebrate');
+
 const {
   getCards, createCard, deleteCard, likeCard, dislikeCard,
 } = require('../controllers/cards');
-const BadRequest = require('../errors/bad-request');
-const { URL_REGEX } = require('../utils/constants');
-
-const validationId = (value) => {
-  if (!mongoose.isValidObjectId(value)) {
-    throw new BadRequest('Переданы некоректные данные при удалении карточки');
-  } else { return value; }
-};
+const { cardCreateCelebrate, cardIdCelebrate } = require('../validators/cards');
 
 // Создать новую карточку:
-router.post('/', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30).required(),
-    link: Joi.string().required().regex(URL_REGEX),
-  }),
-}), createCard);
+router.post('/', cardCreateCelebrate, createCard);
 
 // Получить карточки из бд:
 router.get('/', getCards);
 
 // Удалить карточку по id:
-router.delete('/:cardId', celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().required().custom(validationId),
-  }),
-}), deleteCard);
+router.delete('/:cardId', cardIdCelebrate, deleteCard);
 
 // Поставить лайк карточке:
-router.put('/:cardId/likes', celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().required().custom(validationId),
-  }),
-}), likeCard);
+router.put('/:cardId/likes', cardIdCelebrate, likeCard);
 
 // Удалить лайк с карточки:
-router.delete('/:cardId/likes', celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().required().custom(validationId),
-  }),
-}), dislikeCard);
+router.delete('/:cardId/likes', cardIdCelebrate, dislikeCard);
 
 module.exports = router;
