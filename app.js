@@ -6,6 +6,7 @@ const { celebrate, Joi } = require('celebrate');
 const { errors } = require('celebrate');
 const helmet = require('helmet');
 const auth = require('./middlewares/auth');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 const {
   createUser, login,
 } = require('./controllers/users');
@@ -25,6 +26,7 @@ mongoose
   .connect('mongodb://127.0.0.1:27017/mestodb', {
     useNewUrlParser: true,
   });
+app.use(requestLogger); // подключаем логгер запросов
 
 app.use(express.json());
 app.use(cookieParser());
@@ -48,6 +50,8 @@ app.post('/signup', celebrate({
 }), createUser);
 
 app.use('/', auth, require('./routes/index'));
+
+app.use(errorLogger); // подключаем логгер ошибок
 
 app.use(errors());
 
